@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="js/lib/jquery-3.5.0.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/fielddim.js"></script>
+    <script src="js/main.js"></script>
+    <link rel="stylesheet" type="text/css" href="css/styles.css">
+    <title>snakejs</title>
+</head>
+
+<body>
+    <div id="head-container">
+        <h1 id="headline">Snake using HTML, Javascript and CSS</h1>
+    </div>
+    <!-- Snake field gets injected here via jQuery -->
+    <div id="stats">
+        <p>
+            Points: <span id="eaten-count">-</span> |
+            Velocity: <span id="velocity">-</span> |
+            Snake Location: <span id="snake-location">-</span> |
+            Food Location: <span id="food-location">-</span> |
+            Direction: <span id="direction">-</span>
+        </p>
+    </div>
+</body>
+
+</html>

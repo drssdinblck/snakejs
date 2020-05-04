@@ -79,4 +79,6 @@ td {
     padding: 0;
     margin: 0;
     background-color: black;
+    color: red;
+    font-size: 32px;
 }

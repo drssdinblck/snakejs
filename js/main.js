@@ -128,27 +128,19 @@ function placeSnake (snake) {
 }
 
 function place (obj) {
-  const positions = obj.positions || [obj.position]
-
-  positions.forEach(
+  positions(obj).forEach(
     pos => selectCell(pos).addClass(obj.class).css('background-color', obj.color)
   )
 }
 
-function randomPosition (width, height, exclude = []) {
-  const pos = [randomInteger(0, width), randomInteger(0, height)];
-
-  for (let i = 0; i < exclude.length; i++) {
-    if (pos[0] === exclude[i][0] && pos[1] === exclude[i][1])
-      return randomPosition(width, height, exclude)
-  }
-
-  return pos
-}
-
-function willEat (snake, food) {
-  return snake.head()[0] + snake.direction[0] === food.position[0] &&
-    snake.head()[1] + snake.direction[1] === food.position[1]
+function willCollide (snake, obj) {
+  return positions(obj)
+    .some(
+      pos => {
+        const nextPos = positionOneStepInDirection(snake.head(), snake.direction);
+        return pos[0] === nextPos[0] && pos[1] === nextPos[1];
+      }
+    );
 }
 
 function eat (snake, food) {
@@ -164,28 +156,37 @@ function eat (snake, food) {
 function moveSnake (snake) {
   selectCell(snake.head()).removeClass('head')
 
-  const newHead = [snake.head()[0] + snake.direction[0], snake.head()[1] + snake.direction[1]];
+  const newHead = positionOneStepInDirection(snake.head(), snake.direction)
 
-  selectCell(snake.tail()).removeClass('snake').removeClass('tail').css('background-color', '')
-  selectCell(newHead).addClass('snake').addClass('head').css('background-color', snake.color)
+  selectCell(snake.tail()).removeClass(snake.class).removeClass('tail').css('background-color', '')
+  selectCell(newHead).addClass(snake.class).addClass('head').css('background-color', snake.color)
 
   snake.positions.shift();
   selectCell(snake.tail()).addClass('tail')
   snake.positions.push(newHead);
 }
 
-function generateNewFood (snake) {
+function generateNewFood (snake, wall) {
   return {
-    position: randomPosition(FIELD_WIDTH, FIELD_HEIGHT, snake.positions),
+    position: randomPosition(
+      FIELD_WIDTH,
+      FIELD_HEIGHT,
+      snake.positions.concat(wall.positions)
+    ),
     color: FOOD_COLORS[randomInteger(0, FOOD_COLORS.length)],
     class: 'food'
   }
 }
 
 function makeGameStep (game) {
-  if (willEat(game.snake, game.food)) {
+  if (willCollide(game.snake, game.food)) {
     eat(game.snake, game.food);
-    place(generateNewFood(game.snake));
+    game.food = generateNewFood(game.snake, game.wall);
+    place(game.food);
+  } else if (willCollide(game.snake, game.wall)) {
+    $(document).trigger('dead')
+  } else if (willCollide(game.snake, game.snake)) {
+    $(document).trigger('dead')
   } else {
     moveSnake(game.snake);
   }
@@ -212,7 +213,7 @@ function restartGame () {
   clearField(FIELD_WIDTH, FIELD_HEIGHT);
   let snake = initialSnake(FIELD_WIDTH, FIELD_HEIGHT);
   let wall = initialWall(FIELD_WIDTH, FIELD_HEIGHT);
-  let food = generateNewFood(snake);
+  let food = generateNewFood(snake, wall);
   let eatenCount = 0;
   let velocity = 1.0;
 
@@ -223,6 +224,7 @@ function restartGame () {
   const game = {
     snake: snake,
     food: food,
+    wall: wall,
     getEatenCount: () => eatenCount,
     incrementEatenCount: () => {
       eatenCount++;
@@ -286,6 +288,13 @@ $(document).ready(
           pause(runner)
         }
         isPaused = !isPaused
+      }
+    )
+
+    $(document).on(
+      'dead',
+      () => {
+        // TODO: Add some fancy code here
       }
     )
 

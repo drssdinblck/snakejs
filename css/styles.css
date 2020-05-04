@@ -50,6 +50,10 @@
     border: 1px solid black;
 }
 
+.wall {
+    border: 1px solid black;
+}
+
 body {
     font-family: Monaco, "Lucida Console", monospace;
 }

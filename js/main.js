@@ -32,11 +32,27 @@ function initialSnake (fieldWidth, fieldHeight) {
 
   return {
     color: 'lightblue',
+    class: 'snake',
     positions: positions,
     head: () => positions[positions.length - 1],
     tail: () => positions[0],
     direction: RIGHT
   }
+}
+
+function initialWall (fieldWidth, fieldHeight) {
+  let positions = [];
+
+  for (let i = 0; i < fieldWidth - 1; i++)
+    positions.push([i, 0]);
+  for (let i = 0; i < fieldHeight - 1; i++)
+    positions.push([fieldWidth - 1, i]);
+  for (let i = fieldWidth - 1; i > 0; i--)
+    positions.push([i, fieldHeight - 1]);
+  for (let i = fieldHeight - 1; i > 0; i--)
+    positions.push([0, i]);
+
+  return { color: 'darkgray', class: 'wall', positions: positions }
 }
 
 function selectCell(position) {
@@ -50,7 +66,8 @@ function clearField (width, height) {
         .css('background-color', '')
         .removeClass('snake')
         .removeClass('food')
-        .removeClass('head');
+        .removeClass('head')
+        .removeClass('tail');
     }
   }
 }
@@ -105,19 +122,17 @@ function setupKeypressHandlers (game) {
 }
 
 function placeSnake (snake) {
-  snake.positions.forEach(
-    (pos) => {
-      selectCell(pos).addClass('snake').css('background-color', snake.color)
-    }
-  )
-  selectCell(snake.head()).addClass('head')
-  selectCell(snake.tail()).addClass('tail')
+  place(snake);
+  selectCell(snake.head()).addClass('head');
+  selectCell(snake.tail()).addClass('tail');
 }
 
-function placeFood (food) {
-  selectCell(food.position)
-    .addClass('food')
-    .css('background-color', food.color);
+function place (obj) {
+  const positions = obj.positions || [obj.position]
+
+  positions.forEach(
+    pos => selectCell(pos).addClass(obj.class).css('background-color', obj.color)
+  )
 }
 
 function randomPosition (width, height, exclude = []) {
@@ -159,17 +174,18 @@ function moveSnake (snake) {
   snake.positions.push(newHead);
 }
 
-function generateNewFood (snake, food) {
-  food.position = randomPosition(FIELD_WIDTH, FIELD_HEIGHT, snake.positions);
-  food.color = FOOD_COLORS[randomInteger(0, FOOD_COLORS.length)];
-
-  return food;
+function generateNewFood (snake) {
+  return {
+    position: randomPosition(FIELD_WIDTH, FIELD_HEIGHT, snake.positions),
+    color: FOOD_COLORS[randomInteger(0, FOOD_COLORS.length)],
+    class: 'food'
+  }
 }
 
 function makeGameStep (game) {
   if (willEat(game.snake, game.food)) {
     eat(game.snake, game.food);
-    placeFood(generateNewFood(game.snake, game.food));
+    place(generateNewFood(game.snake));
   } else {
     moveSnake(game.snake);
   }
@@ -195,12 +211,14 @@ function restartGame () {
   clearKeypressHandlers();
   clearField(FIELD_WIDTH, FIELD_HEIGHT);
   let snake = initialSnake(FIELD_WIDTH, FIELD_HEIGHT);
-  let food = generateNewFood(snake, {})
+  let wall = initialWall(FIELD_WIDTH, FIELD_HEIGHT);
+  let food = generateNewFood(snake);
   let eatenCount = 0;
-  let velocity = 1.0
+  let velocity = 1.0;
 
   placeSnake(snake);
-  placeFood(food);
+  place(food);
+  place(wall);
 
   const game = {
     snake: snake,
@@ -214,9 +232,9 @@ function restartGame () {
   }
 
   setupKeypressHandlers(game);
-  updateStats(game)
+  updateStats(game);
 
-  return game
+  return game;
 }
 
 function pause (runner) {
